@@ -1,9 +1,13 @@
 module Main where 
 
 import Network.Socket
+import HTTP
+
+
+defaultResponseProtocol = HTTPProtocol 1 1 200 "text/html" 3 "hej"
 
 defaultResponse :: String
-defaultResponse = "HTTP/1.0 200 OK\r\nContent-Length: 3\r\n\r\nhej"
+defaultResponse = (show defaultResponseProtocol)
 
 main :: IO ()
 main = do
