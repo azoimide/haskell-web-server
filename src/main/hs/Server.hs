@@ -1,17 +1,16 @@
 module Main where 
 
 import Network.Socket
+
 import HTTP
-
-
-defaultResponseProtocol = HTTPProtocol 1 1 200 "text/html" 3 "hej"
+import TestSite
 
 defaultResponse :: String
-defaultResponse = (show defaultResponseProtocol)
+defaultResponse = (show (htmlResponseProtocol 200 "Default response"))
 
 main :: IO ()
 main = do
-    sock <- serverSocket 8080
+    sock <- serverSocket 8081
     acceptLoop sock
 
 serverSocket :: PortNumber -> IO Socket

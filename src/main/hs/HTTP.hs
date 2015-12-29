@@ -1,32 +1,52 @@
 module HTTP (
 	HTTPProtocol,
+	responseProtocol,
+	htmlResponseProtocol
 ) where
 
---import Text.Printf(printf)
+import Text.Printf(printf)
+
+responseProtocol :: Int -> String -> HTTPProtocol
+responseProtocol status content = HTTPProtocol 1 1 status [Header "Content-Length" (show (length content))] content
+
+addHeaderToProtocol :: HTTPProtocol -> Header -> HTTPProtocol
+addHeaderToProtocol (HTTPProtocol v sv s oh content) h = (HTTPProtocol v sv s (oh ++ [h]) content)
+
+htmlResponseProtocol status content = addHeaderToProtocol (responseProtocol status content) (Header "Content-Type" "text/html")
+
+data Header = Header {
+	identity :: String,
+	value :: String
+}
+
+instance Show Header where
+	show h = (identity h) ++ ": " ++ (value h) ++ "\r\n"
+
+showHeaders :: [Header] -> String
+showHeaders [] = []
+showHeaders (h:hs) = ((show h) ++ (showHeaders hs))
 
 -- should be unsigned
 data HTTPProtocol = HTTPProtocol {
 	version :: Int,
 	subVersion :: Int,
 	status :: Int,
-	contentType :: String,
-	contentLength :: Int,
+	headers :: [Header],
 	content :: String
 }
 
 instance Show HTTPProtocol where
-    --show p = printf
-    --	"HTTP/%d.%d %d %s\r\nContent-Length: %d\r\n%s" 
-    --	(version p) (subVersion p) (status p) (statusString (status p))
-    --	(contentLength p) 
-    --	(content p)
-    show p = 
-		"HTTP/" ++ (show (version p)) ++ "." ++ (show (subVersion p)) ++ " " ++ 
-		(show (status p)) ++ " " ++ (statusString (status p)) ++ "\r\n" ++
-		"Content-Type: " ++ (show (contentType p)) ++ "\r\n" ++
-		"Content-Length: " ++ (show (contentLength p)) ++ "\r\n" ++
-		"\r\n" ++
+	show p = printf
+		"HTTP/%d.%d %d %s\r\n%s\r\n%s" 
+		(version p) (subVersion p) (status p) (statusString (status p))
+		(showHeaders (headers p))
 		(content p)
+	--show p = 
+	--	"HTTP/" ++ (show (version p)) ++ "." ++ (show (subVersion p)) ++ " " ++ 
+	--	(show (status p)) ++ " " ++ (statusString (status p)) ++ "\r\n" ++
+	--	(showHeaders (headers p)) ++ 
+	--	"\r\n" ++
+	--	(content p)
 
 
 
