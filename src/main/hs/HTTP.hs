@@ -2,10 +2,11 @@ module HTTP (
     HTTPResponse,
     responseProtocol,
     addHeaderToProtocol,
-    htmlResponseProtocol,
 
     HTTPRequest,
-    parseHTTPRequest
+    parseHTTPRequest,
+    path, 
+    uri
 ) where
 
 import Data.List.Split(splitOn)
@@ -42,15 +43,18 @@ parseHeaders (h:hs) = (parseHeader h):(parseHeaders hs)
 
 
 
-
+-- TODO: Understand why this ugly hack is requierd
 responseProtocol :: Int -> String -> HTTPResponse
-responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show (length c))] c
+responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show ((length c) + 5))] (c ++ "     ")
 
-addHeaderToProtocol :: HTTPResponse -> Header -> HTTPResponse
-addHeaderToProtocol (HTTPResponse v sv s oh c) h = (HTTPResponse v sv s (oh ++ [h]) c)
+--addHeaderToProtocol :: HTTPResponse -> Header -> HTTPResponse
+--addHeaderToProtocol (HTTPResponse v sv s oh c) h = (HTTPResponse v sv s (oh ++ [h]) c)
 
-htmlResponseProtocol :: Int -> String -> HTTPResponse
-htmlResponseProtocol s c = addHeaderToProtocol (responseProtocol s c) (Header "Content-Type" "text/html")
+--htmlResponseProtocol :: Int -> String -> HTTPResponse
+--htmlResponseProtocol s c = addHeaderToProtocol (responseProtocol s c) (Header "Content-Type" "text/html")
+
+addHeaderToProtocol :: Key -> Value -> HTTPResponse -> HTTPResponse
+addHeaderToProtocol k val (HTTPResponse v sv s oh c) = (HTTPResponse v sv s (oh ++ [Header k val]) c)
 
 
 -- should be unsigned 

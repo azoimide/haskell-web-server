@@ -3,11 +3,11 @@ module Main where
 import Network.Socket
 
 import HTTP
-import TestSite
+import Resources
 
 defaultResponse :: IO String
-defaultResponse = testSiteResponse
---defaultResponse = return (show (responseProtocol 200 "Default response"))
+--defaultResponse = testSiteResponse
+defaultResponse = return (show (responseProtocol 200 "Default response"))
 
 main :: IO ()
 main = do
@@ -28,8 +28,9 @@ acceptLoop sock = do
     request <- recv cliSock 4096
     putStrLn $ show cliSock
     putStrLn request
-    
-    resp <- defaultResponse
+    --putStrLn (show (parseHTTPRequest (request)))
+    resp <- fmap show $ (responseFromRequest (parseHTTPRequest (request)))
+    --resp <- defaultResponse
     --putStrLn resp
     _ <- send cliSock resp
     close cliSock
