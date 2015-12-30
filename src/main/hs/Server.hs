@@ -5,12 +5,13 @@ import Network.Socket
 import HTTP
 import TestSite
 
-defaultResponse :: String
-defaultResponse = (show (htmlResponseProtocol 200 "Default response"))
+defaultResponse :: IO String
+defaultResponse = testSiteResponse
+--defaultResponse = return (show (responseProtocol 200 "Default response"))
 
 main :: IO ()
 main = do
-    sock <- serverSocket 8081
+    sock <- serverSocket 8083
     acceptLoop sock
 
 serverSocket :: PortNumber -> IO Socket
@@ -24,6 +25,13 @@ serverSocket port = do
 acceptLoop :: Socket -> IO ()
 acceptLoop sock = do
     (cliSock, _) <- accept sock
-    _ <- send cliSock defaultResponse
+    request <- recv cliSock 4096
+    putStrLn $ show cliSock
+    putStrLn request
+    
+    resp <- defaultResponse
+    --putStrLn resp
+    _ <- send cliSock resp
+    close cliSock
     acceptLoop sock
 
