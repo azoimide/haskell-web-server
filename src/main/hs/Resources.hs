@@ -26,5 +26,5 @@ getContentType f
     where su = last (splitOn "." f)
 
 responseFromRequest :: HTTPRequest -> IO HTTPResponse
-responseFromRequest req = fmap (addHeaderToProtocol "Content-Type" (getContentType f)) $ fmap (responseProtocol 200) (readBufFile (baseDirectory ++ f))
+responseFromRequest req = fmap (addHeaderToProtocol "Content-Type" (getContentType f)) $ fmap (responseProtocol 200) (readFile (baseDirectory ++ f))
     where f = (getFile (path (uri req)))
