@@ -5,17 +5,14 @@ module Resources (
 import HTTP
 
 import Data.List.Split(splitOn)
+--import System.Directory(doesFileExist)
 
-baseDirectory :: String
+baseDirectory :: FilePath
 baseDirectory = "resources/testsite"
 
---testSiteResponse :: IO String
---testSiteResponse = fmap show $ fmap (htmlResponseProtocol 200) (readFile (baseDirectory ++ "index.html"))
-
-getFile :: String -> String
-getFile s
-    | s == "/" = "/index.html"
-    | otherwise = s
+getFile :: String -> FilePath
+getFile "/" = getFile "/index.html"
+getFile s = s
 
 getContentType :: String -> String
 getContentType f
@@ -27,4 +24,6 @@ getContentType f
 
 responseFromRequest :: HTTPRequest -> IO HTTPResponse
 responseFromRequest req = fmap (addHeaderToProtocol "Content-Type" (getContentType f)) $ fmap (responseProtocol 200) (readFile (baseDirectory ++ f))
+--    | (doesFileExist f) = fmap (addHeaderToProtocol "Content-Type" (getContentType f)) $ fmap (responseProtocol 200) (readFile (baseDirectory ++ f))
+--    | otherwise = fmap (responseProtocol 404) (read "404 - Not Found")
     where f = (getFile (path (uri req)))

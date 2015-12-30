@@ -5,10 +5,6 @@ import Network.Socket
 import HTTP
 import Resources
 
-defaultResponse :: IO String
---defaultResponse = testSiteResponse
-defaultResponse = return (show (responseProtocol 200 "Default response"))
-
 main :: IO ()
 main = do
     sock <- serverSocket 8083
@@ -27,12 +23,13 @@ acceptLoop sock = do
     (cliSock, _) <- accept sock
     request <- recv cliSock 4096
     putStrLn $ show cliSock
+
     putStrLn request
-    --putStrLn (show (parseHTTPRequest (request)))
-    resp <- fmap show $ (responseFromRequest (parseHTTPRequest (request)))
-    --resp <- defaultResponse
-    --putStrLn resp
-    _ <- send cliSock resp
+
+    response <- fmap show $ (responseFromRequest (parseHTTPRequest (request)))
+    --putStrLn response
+    
+    _ <- send cliSock response
     close cliSock
     acceptLoop sock
 

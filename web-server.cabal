@@ -22,3 +22,5 @@ executable web-server
   build-depends:       base >=4.6 && <5
                      , network >= 2.6.2.1
                      , split >= 0.2
+                     , bytestring >= 0.10
+                     , directory
