@@ -2,12 +2,16 @@ module Main where
 
 import Network.Socket
 
-defaultResponse :: String
-defaultResponse = "HTTP/1.0 200 OK\r\nContent-Length: 3\r\n\r\nhej"
+import HTTP
+import TestSite
+
+defaultResponse :: IO String
+defaultResponse = testSiteResponse
+--defaultResponse = return (show (responseProtocol 200 "Default response"))
 
 main :: IO ()
 main = do
-    sock <- serverSocket 8080
+    sock <- serverSocket 8083
     acceptLoop sock
 
 serverSocket :: PortNumber -> IO Socket
@@ -21,6 +25,13 @@ serverSocket port = do
 acceptLoop :: Socket -> IO ()
 acceptLoop sock = do
     (cliSock, _) <- accept sock
-    _ <- send cliSock defaultResponse
+    request <- recv cliSock 4096
+    putStrLn $ show cliSock
+    putStrLn request
+    
+    resp <- defaultResponse
+    --putStrLn resp
+    _ <- send cliSock resp
+    close cliSock
     acceptLoop sock
 
