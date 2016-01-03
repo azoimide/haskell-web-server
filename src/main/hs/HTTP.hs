@@ -2,6 +2,7 @@ module HTTP (
     HTTPResponse,
     responseProtocol,
     addHeaderToProtocol,
+    toByteString,
 
     HTTPRequest,
     parseHTTPRequest,
@@ -11,6 +12,8 @@ module HTTP (
 
 import Data.List.Split(splitOn)
 import Text.Printf(printf)
+import Data.ByteString.Lazy as BS(ByteString, length, append)
+import Data.ByteString.Lazy.Char8(unpack, pack)
 
 type Key = String
 type Value = String
@@ -44,8 +47,8 @@ parseHeaders (h:hs) = (parseHeader h):(parseHeaders hs)
 
 
 -- TODO: length doesent understand that åäö takes more then one byte when sending so the count is wrong
-responseProtocol :: Int -> String -> HTTPResponse
-responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show (length c))] c
+responseProtocol :: Int -> ByteString -> HTTPResponse
+responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show (BS.length c))] c
 
 addHeaderToProtocol :: Key -> Value -> HTTPResponse -> HTTPResponse
 addHeaderToProtocol k val (HTTPResponse v sv s oh c) = (HTTPResponse v sv s (oh ++ [Header k val]) c)
@@ -57,15 +60,25 @@ data HTTPResponse = HTTPResponse {
     resSubVersion :: Int,
     status :: Int,
     resHeaders :: [Header],
-    content :: String
+    content :: ByteString
 }
+
+toByteString :: HTTPResponse -> ByteString
+toByteString p = append 
+        (pack (printf
+        "HTTP/%d.%d %d %s\r\n%s\r\n" 
+        (resVersion p) (resSubVersion p) (status p) (statusString (status p))
+        (showHeaders (resHeaders p))))
+        
+        (content p)
+
 
 instance Show HTTPResponse where
     show p = printf
         "HTTP/%d.%d %d %s\r\n%s\r\n%s" 
         (resVersion p) (resSubVersion p) (status p) (statusString (status p))
         (showHeaders (resHeaders p))
-        (content p)
+        (unpack (content p))
     --show p = 
     --  "HTTP/" ++ (show (version p)) ++ "." ++ (show (subVersion p)) ++ " " ++ 
     --  (show (status p)) ++ " " ++ (statusString (status p)) ++ "\r\n" ++

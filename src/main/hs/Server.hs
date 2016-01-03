@@ -1,6 +1,7 @@
 module Main where 
 
 import Network.Socket
+import Network.Socket.ByteString.Lazy as BS(send)
 
 import HTTP
 import Resources
@@ -26,10 +27,12 @@ acceptLoop sock = do
 
     putStrLn request
 
-    response <- fmap show $ (responseFromRequest (parseHTTPRequest (request)))
-    --putStrLn response
+    --response <- fmap show (responseFromRequest (parseHTTPRequest (request)))
     
-    _ <- send cliSock response
+    --_ <- send cliSock response
+    response <- fmap toByteString (responseFromRequest (parseHTTPRequest (request)))
+    
+    _ <- BS.send cliSock response
     close cliSock
     acceptLoop sock
 
