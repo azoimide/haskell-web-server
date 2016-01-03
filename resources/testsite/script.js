@@ -18,10 +18,10 @@ function readFile(path) {
     return text;
 }
 
-// All scriptning som ska gras i brjan placeras hr
+// All scriptning som ska gras i bröjan placeras här
 function init() {
 
-	var content = document.getElementById("content");
+	var content = document.getElementById("text");
 
     content.innerHTML = "Javascript: OK";
     content.innerHTML += readFile("readfile.txt");

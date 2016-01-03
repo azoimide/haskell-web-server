@@ -35,8 +35,14 @@ div#content {
     margin:10mm;
     margin-left:auto;
     margin-right:auto;
-    padding:1px;
     
     border-radius:4mm;
     box-shadow: 0px 0px 50px 20px rgba(0, 0, 0, 0.2);
+}
+
+div#content div {
+    padding:10mm;
+}
+div#content img {
+    width:100%;
 }
