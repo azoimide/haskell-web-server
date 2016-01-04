@@ -13,7 +13,7 @@ module HTTP (
 import Data.List.Split(splitOn)
 import Text.Printf(printf)
 import Data.ByteString.Lazy as BS(ByteString, length, append)
-import Data.ByteString.Lazy.Char8(unpack, pack)
+import Data.ByteString.Lazy.Char8(pack)
 
 type Key = String
 type Value = String
@@ -46,7 +46,6 @@ parseHeaders (h:hs) = (parseHeader h):(parseHeaders hs)
 
 
 
--- TODO: length doesent understand that åäö takes more then one byte when sending so the count is wrong
 responseProtocol :: Int -> ByteString -> HTTPResponse
 responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show (BS.length c))] c
 
@@ -73,12 +72,12 @@ toByteString p = append
         (content p)
 
 
-instance Show HTTPResponse where
-    show p = printf
-        "HTTP/%d.%d %d %s\r\n%s\r\n%s" 
-        (resVersion p) (resSubVersion p) (status p) (statusString (status p))
-        (showHeaders (resHeaders p))
-        (unpack (content p))
+--instance Show HTTPResponse where
+--    show p = printf
+--        "HTTP/%d.%d %d %s\r\n%s\r\n%s" 
+--        (resVersion p) (resSubVersion p) (status p) (statusString (status p))
+--        (showHeaders (resHeaders p))
+--        (unpack (content p))
     --show p = 
     --  "HTTP/" ++ (show (version p)) ++ "." ++ (show (subVersion p)) ++ " " ++ 
     --  (show (status p)) ++ " " ++ (statusString (status p)) ++ "\r\n" ++

@@ -6,9 +6,11 @@ import Network.Socket.ByteString.Lazy as BS(send)
 import HTTP
 import Resources
 
+import Settings(acceptPortNumber)
+
 main :: IO ()
 main = do
-    sock <- serverSocket 8083
+    sock <- serverSocket acceptPortNumber
     acceptLoop sock
 
 serverSocket :: PortNumber -> IO Socket
