@@ -209,15 +209,30 @@ parseMethod s
     | s == "GET" = GET
     | otherwise = UNSUPPORTED
 
-
--- TODO: Add more parts to URI
 data URI = URI {
-    path :: String
-}
+    scheme :: String,
+    -- userinfo :: String,
+    host :: String,
+    port :: String, -- TODO: maybe change to number
+    path :: String,
+    query :: String,
+    fragment :: String
+} deriving (Show)  
 
--- this looks pointless
+
+-- example:
+-- abc://username:password@example.com:123/path/data?key=value#fragid1
 parseURI :: String -> URI
-parseURI s = URI s
+parseURI s 
+    | Prelude.length s1 == 1 = parseURI ("://" ++ s)
+    | Prelude.length s4 == 1 = parseURI (s ++ "?")
+    | otherwise = URI (head s1) (head s3) (last s3) (head s4) (head s5) (last s5)
+    where 
+        s1 = splitOn "://" s
+        s2 = splitOn "/" (last s1)
+        s3 = splitOn ":" (head s2)
+        s4 = splitOn "?" (drop (Prelude.length (head s2)) (last s1))
+        s5 = splitOn "#" (last s4)
 
 
 data HTTPRequest = HTTPRequest {
