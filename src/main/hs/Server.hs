@@ -1,17 +1,16 @@
 module Main where 
 
 import Network.Socket
+import Network.Socket.ByteString.Lazy as BS(send)
 
 import HTTP
-import TestSite
+import Resources
 
-defaultResponse :: IO String
-defaultResponse = testSiteResponse
---defaultResponse = return (show (responseProtocol 200 "Default response"))
+import Settings(acceptPortNumber)
 
 main :: IO ()
 main = do
-    sock <- serverSocket 8083
+    sock <- serverSocket acceptPortNumber
     acceptLoop sock
 
 serverSocket :: PortNumber -> IO Socket
@@ -27,11 +26,15 @@ acceptLoop sock = do
     (cliSock, _) <- accept sock
     request <- recv cliSock 4096
     putStrLn $ show cliSock
+
     putStrLn request
+
+    --response <- fmap show (responseFromRequest (parseHTTPRequest (request)))
     
-    resp <- defaultResponse
-    --putStrLn resp
-    _ <- send cliSock resp
+    --_ <- send cliSock response
+    response <- fmap toByteString (responseFromRequest (parseHTTPRequest (request)))
+    
+    _ <- BS.send cliSock response
     close cliSock
     acceptLoop sock
 

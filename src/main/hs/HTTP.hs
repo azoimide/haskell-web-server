@@ -2,14 +2,18 @@ module HTTP (
     HTTPResponse,
     responseProtocol,
     addHeaderToProtocol,
-    htmlResponseProtocol,
+    toByteString,
 
     HTTPRequest,
-    parseHTTPRequest
+    parseHTTPRequest,
+    path, 
+    uri
 ) where
 
 import Data.List.Split(splitOn)
 import Text.Printf(printf)
+import Data.ByteString.Lazy as BS(ByteString, length, append)
+import Data.ByteString.Lazy.Char8(pack)
 
 type Key = String
 type Value = String
@@ -42,15 +46,11 @@ parseHeaders (h:hs) = (parseHeader h):(parseHeaders hs)
 
 
 
+responseProtocol :: Int -> ByteString -> HTTPResponse
+responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show (BS.length c))] c
 
-responseProtocol :: Int -> String -> HTTPResponse
-responseProtocol s c = HTTPResponse 1 1 s [Header "Content-Length" (show (length c))] c
-
-addHeaderToProtocol :: HTTPResponse -> Header -> HTTPResponse
-addHeaderToProtocol (HTTPResponse v sv s oh c) h = (HTTPResponse v sv s (oh ++ [h]) c)
-
-htmlResponseProtocol :: Int -> String -> HTTPResponse
-htmlResponseProtocol s c = addHeaderToProtocol (responseProtocol s c) (Header "Content-Type" "text/html")
+addHeaderToProtocol :: Key -> Value -> HTTPResponse -> HTTPResponse
+addHeaderToProtocol k val (HTTPResponse v sv s oh c) = (HTTPResponse v sv s (oh ++ [Header k val]) c)
 
 
 -- should be unsigned 
@@ -59,15 +59,25 @@ data HTTPResponse = HTTPResponse {
     resSubVersion :: Int,
     status :: Int,
     resHeaders :: [Header],
-    content :: String
+    content :: ByteString
 }
 
-instance Show HTTPResponse where
-    show p = printf
-        "HTTP/%d.%d %d %s\r\n%s\r\n%s" 
+toByteString :: HTTPResponse -> ByteString
+toByteString p = append 
+        (pack (printf
+        "HTTP/%d.%d %d %s\r\n%s\r\n" 
         (resVersion p) (resSubVersion p) (status p) (statusString (status p))
-        (showHeaders (resHeaders p))
+        (showHeaders (resHeaders p))))
+        
         (content p)
+
+
+--instance Show HTTPResponse where
+--    show p = printf
+--        "HTTP/%d.%d %d %s\r\n%s\r\n%s" 
+--        (resVersion p) (resSubVersion p) (status p) (statusString (status p))
+--        (showHeaders (resHeaders p))
+--        (unpack (content p))
     --show p = 
     --  "HTTP/" ++ (show (version p)) ++ "." ++ (show (subVersion p)) ++ " " ++ 
     --  (show (status p)) ++ " " ++ (statusString (status p)) ++ "\r\n" ++
@@ -83,57 +93,109 @@ statusString s
     -- HTTP/1.1
 
     -- Informational 1xx
-    | s == 100 = "Continue"
-    | s == 101 = "Switching Protocols"
+    | s == 100 = "CONTINUE"
+    | s == 101 = "SWITCHING_PROTOCOLS"
 
     -- Successful 2xx
     | s == 200 = "OK"
-    | s == 201 = "Created"
-    | s == 202 = "Accepted"
-    | s == 203 = "Non-Authoritative Information"
-    | s == 204 = "No Content"
-    | s == 205 = "Reset Content"
-    | s == 206 = "Partial Content"
+    | s == 201 = "CREATED"
+    | s == 202 = "ACCEPTED"
+    | s == 203 = "NON-AUTHORITATIVE_INFORMATION"
+    | s == 204 = "NO_CONTENT"
+    | s == 205 = "RESET_CONTENT"
+    | s == 206 = "PARTIAL_CONTENT"
 
     -- Redirection 3xx
-    | s == 300 = "Multiple Choices"
-    | s == 301 = "Moved Permanently"
-    | s == 302 = "Found"
-    | s == 303 = "See Other"
-    | s == 304 = "Not Modified"
-    | s == 305 = "Use Proxy"
+    | s == 300 = "MULTIPLE_CHOICES"
+    | s == 301 = "MOVED_PERMANENTLY"
+    | s == 302 = "FOUND"
+    | s == 303 = "SEE_OTHER"
+    | s == 304 = "NOT_MODIFIED"
+    | s == 305 = "USE_PROXY"
     -- 306 Unused
-    | s == 307 = "Temporary Redirect"
+    | s == 307 = "TEMPORARY_REDIRECT"
 
     -- Client Error 4xx
-    | s == 400 = "Bad Request"
-    | s == 401 = "Unauthorized"
-    | s == 402 = "Payment Required"
-    | s == 403 = "Forbidden"
-    | s == 404 = "Not Found"
-    | s == 405 = "Method Not Allowed"
-    | s == 406 = "Not Acceptable"
-    | s == 407 = "Proxy Authentication Required"
-    | s == 408 = "Request Timeout"
-    | s == 409 = "Conflict"
-    | s == 410 = "Gone"
-    | s == 411 = "Length Required"
-    | s == 412 = "Precondition Failed"
-    | s == 413 = "Request Entity Too Large"
-    | s == 414 = "Request-URI Too Long"
-    | s == 415 = "Unsupported Media Type"
-    | s == 416 = "Requested Range Not Satisfiable"
-    | s == 417 = "Expectation Failed"
+    | s == 400 = "BAD_REQUEST"
+    | s == 401 = "UNAUTHORIZED"
+    | s == 402 = "PAYMENT_REQUIRED"
+    | s == 403 = "FORBIDDEN"
+    | s == 404 = "NOT_FOUND"
+    | s == 405 = "METHOD_NOT_ALLOWED"
+    | s == 406 = "NOT_ACCEPTABLE"
+    | s == 407 = "PROXY_AUTHENTICATION_REQUIRED"
+    | s == 408 = "REQUEST_TIMEOUT"
+    | s == 409 = "CONFLICT"
+    | s == 410 = "GONE"
+    | s == 411 = "LENGTH_REQUIRED"
+    | s == 412 = "PRECONDITION_FAILED"
+    | s == 413 = "REQUEST_ENTITY_TOO_LARGE"
+    | s == 414 = "REQUEST-URI_TOO_LONG"
+    | s == 415 = "UNSUPPORTED_MEDIA_TYPE"
+    | s == 416 = "REQUESTED_RANGE_NOT_SATISFIABLE"
+    | s == 417 = "EXPECTATION_FAILED"
 
     -- Server Error 5xx
-    | s == 500 = "Internal Server Error"
-    | s == 501 = "Not Implemented"
-    | s == 502 = "Bad Gateway"
-    | s == 503 = "Service Unavailable"
-    | s == 504 = "Gateway Timeout"
-    | s == 505 = "HTTP Version Not Supported"
+    | s == 500 = "INTERNAL_SERVER_ERROR"
+    | s == 501 = "NOT_IMPLEMENTED"
+    | s == 502 = "BAD_GATEWAY"
+    | s == 503 = "SERVICE_UNAVAILABLE"
+    | s == 504 = "GATEWAY_TIMEOUT"
+    | s == 505 = "HTTP_VERSION_NOT_SUPPORTED"
 
     | otherwise = "_NO_STATUS_STRING_"
+
+
+--  -- Informational 1xx
+--  | s == 100 = "Continue"
+--  | s == 101 = "Switching Protocols"
+--
+--  -- Successful 2xx
+--  | s == 200 = "OK"
+--  | s == 201 = "Created"
+--  | s == 202 = "Accepted"
+--  | s == 203 = "Non-Authoritative Information"
+--  | s == 204 = "No Content"
+--  | s == 205 = "Reset Content"
+--  | s == 206 = "Partial Content"
+--
+--  -- Redirection 3xx
+--  | s == 300 = "Multiple Choices"
+--  | s == 301 = "Moved Permanently"
+--  | s == 302 = "Found"
+--  | s == 303 = "See Other"
+--  | s == 304 = "Not Modified"
+--  | s == 305 = "Use Proxy"
+--  -- 306 Unused
+--  | s == 307 = "Temporary Redirect"
+--
+--  -- Client Error 4xx
+--  | s == 400 = "Bad Request"
+--  | s == 401 = "Unauthorized"
+--  | s == 402 = "Payment Required"
+--  | s == 403 = "Forbidden"
+--  | s == 404 = "Not Found"
+--  | s == 405 = "Method Not Allowed"
+--  | s == 406 = "Not Acceptable"
+--  | s == 407 = "Proxy Authentication Required"
+--  | s == 408 = "Request Timeout"
+--  | s == 409 = "Conflict"
+--  | s == 410 = "Gone"
+--  | s == 411 = "Length Required"
+--  | s == 412 = "Precondition Failed"
+--  | s == 413 = "Request Entity Too Large"
+--  | s == 414 = "Request-URI Too Long"
+--  | s == 415 = "Unsupported Media Type"
+--  | s == 416 = "Requested Range Not Satisfiable"
+--  | s == 417 = "Expectation Failed"
+--
+--  -- Server Error 5xx
+--  | s == 500 = "Internal Server Error"
+--  | s == 501 = "Not Implemented"
+--  | s == 502 = "Bad Gateway"
+--  | s == 503 = "Service Unavailable"
+--  | s == 504 = "Gateway Timeout"
+--  | s == 505 = "HTTP Version Not Supported"
 
 
 
@@ -153,6 +215,7 @@ data URI = URI {
     path :: String
 }
 
+-- this looks pointless
 parseURI :: String -> URI
 parseURI s = URI s
 
